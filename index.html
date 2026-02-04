@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#0f172a" />
+  <title>Invoice Maker Lite</title>
+
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css" />
+
+  <meta name="description" content="Offline Invoice Maker + Ledger (PWA)" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">₹</div>
+      <div>
+        <div class="title">Invoice Maker Lite</div>
+        <div class="subtitle">Offline • WhatsApp • PDF</div>
+      </div>
+    </div>
+
+    <div class="top-actions">
+      <button id="btnNew" class="btn primary">+ New Invoice</button>
+      <button id="btnSettings" class="btn">Settings</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- SETTINGS -->
+    <section id="viewSettings" class="card hidden">
+      <div class="card-head">
+        <h2>Business Settings</h2>
+        <button id="btnCloseSettings" class="btn">Close</button>
+      </div>
+
+      <div class="grid2">
+        <div class="field">
+          <label>Business Name</label>
+          <input id="bizName" placeholder="e.g. Abbas Designs" />
+        </div>
+        <div class="field">
+          <label>Phone</label>
+          <input id="bizPhone" placeholder="e.g. 03xx-xxxxxxx" />
+        </div>
+        <div class="field">
+          <label>Address</label>
+          <input id="bizAddress" placeholder="e.g. Gilgit, Pakistan" />
+        </div>
+        <div class="field">
+          <label>Currency</label>
+          <select id="bizCurrency">
+            <option value="PKR">PKR</option>
+            <option value="USD">USD</option>
+            <option value="AED">AED</option>
+            <option value="EUR">EUR</option>
+            <option value="GBP">GBP</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <button id="btnSaveSettings" class="btn primary">Save Settings</button>
+        <button id="btnResetAll" class="btn danger">Reset ALL Data</button>
+      </div>
+      <p class="hint">Tip: Later you can add Urdu/English toggle. For now this is simple English UI.</p>
+    </section>
+
+    <!-- HOME / LIST -->
+    <section id="viewHome" class="card">
+      <div class="card-head">
+        <h2>Your Invoices</h2>
+        <div class="filters">
+          <input id="searchBox" placeholder="Search client / invoice id..." />
+          <select id="statusFilter">
+            <option value="all">All</option>
+            <option value="unpaid">Unpaid</option>
+            <option value="paid">Paid</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="invoiceList" class="list"></div>
+      <div id="emptyState" class="empty hidden">
+        <div class="empty-big">No invoices yet</div>
+        <div class="empty-small">Click “New Invoice” to create your first invoice.</div>
+      </div>
+    </section>
+
+    <!-- EDIT / NEW INVOICE -->
+    <section id="viewEditor" class="card hidden">
+      <div class="card-head">
+        <h2 id="editorTitle">New Invoice</h2>
+        <button id="btnCancelEditor" class="btn">Back</button>
+      </div>
+
+      <div class="split">
+        <div>
+          <h3>Client</h3>
+          <div class="grid2">
+            <div class="field">
+              <label>Client Name</label>
+              <input id="clientName" placeholder="e.g. Ahmed" />
+            </div>
+            <div class="field">
+              <label>Client Phone (optional)</label>
+              <input id="clientPhone" placeholder="e.g. 03xx-xxxxxxx" />
+            </div>
+          </div>
+
+          <div class="grid2">
+            <div class="field">
+              <label>Invoice Date</label>
+              <input id="invoiceDate" type="date" />
+            </div>
+            <div class="field">
+              <label>Due Date (optional)</label>
+              <input id="dueDate" type="date" />
+            </div>
+          </div>
+
+          <h3>Items</h3>
+          <div class="items-head">
+            <div>Item</div>
+            <div class="right">Qty</div>
+            <div class="right">Rate</div>
+            <div class="right">Total</div>
+            <div></div>
+          </div>
+
+          <div id="items"></div>
+
+          <div class="row">
+            <button id="btnAddItem" class="btn">+ Add Item</button>
+          </div>
+
+          <div class="grid2">
+            <div class="field">
+              <label>Discount</label>
+              <input id="discount" type="number" min="0" value="0" />
+            </div>
+            <div class="field">
+              <label>Tax %</label>
+              <input id="tax" type="number" min="0" value="0" />
+            </div>
+          </div>
+
+          <div class="totals">
+            <div class="tot-row">
+              <span>Subtotal</span>
+              <span id="subtotalVal">0</span>
+            </div>
+            <div class="tot-row">
+              <span>Discount</span>
+              <span id="discountVal">0</span>
+            </div>
+            <div class="tot-row">
+              <span>Tax</span>
+              <span id="taxVal">0</span>
+            </div>
+            <div class="tot-row grand">
+              <span>Grand Total</span>
+              <span id="grandVal">0</span>
+            </div>
+          </div>
+
+          <div class="row">
+            <button id="btnSaveInvoice" class="btn primary">Save Invoice</button>
+          </div>
+        </div>
+
+        <!-- PREVIEW -->
+        <div>
+          <h3>Preview</h3>
+          <div id="printArea" class="invoice">
+            <div class="invoice-top">
+              <div>
+                <div id="pvBizName" class="inv-biz">Your Business</div>
+                <div id="pvBizPhone" class="inv-sub"></div>
+                <div id="pvBizAddress" class="inv-sub"></div>
+              </div>
+              <div class="inv-meta">
+                <div><b>Invoice:</b> <span id="pvInvId">—</span></div>
+                <div><b>Date:</b> <span id="pvDate">—</span></div>
+                <div><b>Due:</b> <span id="pvDue">—</span></div>
+                <div><b>Status:</b> <span id="pvStatus">Unpaid</span></div>
+              </div>
+            </div>
+
+            <div class="invoice-client">
+              <div><b>Bill To:</b> <span id="pvClient">—</span></div>
+              <div class="inv-sub" id="pvClientPhone"></div>
+            </div>
+
+            <table class="inv-table">
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th class="right">Qty</th>
+                  <th class="right">Rate</th>
+                  <th class="right">Total</th>
+                </tr>
+              </thead>
+              <tbody id="pvItems"></tbody>
+            </table>
+
+            <div class="inv-totals">
+              <div class="inv-tot-row"><span>Subtotal</span><span id="pvSubtotal">0</span></div>
+              <div class="inv-tot-row"><span>Discount</span><span id="pvDiscount">0</span></div>
+              <div class="inv-tot-row"><span>Tax</span><span id="pvTax">0</span></div>
+              <div class="inv-tot-row grand"><span>Grand Total</span><span id="pvGrand">0</span></div>
+            </div>
+
+            <div class="inv-footer">
+              <div class="inv-sub">Thank you!</div>
+              <div class="inv-sub">Generated by Invoice Maker Lite</div>
+            </div>
+          </div>
+
+          <div class="row">
+            <button id="btnPrint" class="btn">Print / Save PDF</button>
+            <button id="btnWhatsApp" class="btn">Send on WhatsApp</button>
+          </div>
+
+          <div class="row">
+            <button id="btnMarkPaid" class="btn">Toggle Paid/Unpaid</button>
+            <button id="btnDelete" class="btn danger">Delete</button>
+          </div>
+
+          <p class="hint">Note: For WhatsApp share, client phone optional. If blank, it opens WhatsApp share chooser.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>Offline PWA • LocalStorage</span>
+    <span id="installHint" class="install-hint hidden">Tip: Use “Add to Home Screen” to install.</span>
+  </footer>
+
+  <script src="app.js"></script>
+  <script>
+    // Register service worker (PWA)
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => navigator.serviceWorker.register("./service-worker.js"));
+    }
+  </script>
+</body>
+</html>
